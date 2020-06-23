@@ -1,6 +1,6 @@
 # Base de datos
 
-Para poder usar base de datos necesitaremos tener la capacidad de persistir datos. 
+Para poder usar base de datos necesitaremos tener la capacidad de persistir datos.
 Para ello usaremos los [PersistentVolumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) de Kubernetes.
 
 ## Secrets
@@ -33,7 +33,7 @@ Deplegamos los secrets en el cluster
 kubectl apply -f secrets.yml
 ```
 
-> IMPORTANTE: Estos credenciales no están encriptados y no deberían subirse a un repositorio sin encriptar previamente. Se puede usar un gestor de secretos como Vault o git-cript.
+> IMPORTANTE: Estos credenciales no están encriptados y no deberían subirse a un repositorio sin encriptar previamente. Se puede usar un gestor de secretos como Vault o git-crypt.
 
 Primero creamos el servicio para exponer postgresql-service en nuestro cluster
 
@@ -119,7 +119,7 @@ NAME                  STATUS   VOLUME        CAPACITY   ACCESS MODES   STORAGECL
 postgresql-pv-claim   Bound    postgres-pv   2Gi        RWO            manual         13m
 ```
 
-y 
+y
 
 ```
 kubectl get svc
@@ -142,7 +142,7 @@ cd /data/postgres-pv/
 
 Finalmente añadimos la información del propio contenedor de postgres a nuestro archivo de despliegue
 ```
-apiVersion: apps/v1 
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgresql-deployment
