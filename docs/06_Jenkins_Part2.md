@@ -228,7 +228,7 @@ Modificamos la condición de Poll a
     }
 ```
 
-Esto preguntará al repo cada minuto si hay cambios y lanzará el trabajo en caso afirmativo. 
+Esto preguntará al repo cada minuto si hay cambios y lanzará el trabajo en caso afirmativo.
 
 > NO HACER ESTO EN CASA ;)
 
@@ -254,7 +254,7 @@ Creamos un repositorio para guardar nuestro archivo de deployment de develop en 
 
 Ahora en Jenkins descargaremos el archivo de deployment.
 
-> IMPORTANTE: Añadir nombre e email para GIT en Jenkins. Para ello navegamos a Administrar Jenkins > Configurar > Scroll down hasta 'GitHub plugin' e introducimos `Global Config user.name Value` y `Global Config user.email Value`
+> IMPORTANTE: Añadir nombre e email para GIT en Jenkins. Para ello navegamos a Administrar Jenkins > Configurar > Scroll down hasta 'Git plugin' e introducimos `Global Config user.name Value` y `Global Config user.email Value`
 > Si vuestra contraseña contiene carácteres especiales deberéis crear un credencial nuevo con vuestra contraseña en URLENCODED. En mi caso la he llamado `Git-Encoded`. La docu la dejo con el ID `GitHub`original
 
 Añadimos esta fase:

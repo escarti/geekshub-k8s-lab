@@ -75,7 +75,7 @@ Deberemos parar los contenedores existente volver a ejecutar
 ```
 docker kill CONTAINER-ID
 docker-compose -f compose/jenkins.yml up -d
-``` 
+```
 
 Podremos ver los volúmenes creados usando
 ```
@@ -140,7 +140,7 @@ Deberíamos poder hacer login con admin:admin123
 
 ## Instalar docker en Jenkins Alpine
 
-Ahora debemos instalar docker dentro del contenedor de docker-alpine de Jenkins. 
+Ahora debemos instalar docker dentro del contenedor de docker-alpine de Jenkins.
 
 Hacemos `docker ps` y obtenemos el HASH del contenedor de Jenkins y ejecutamos:
 
@@ -180,7 +180,11 @@ y marcamos:
 - repo (todo)
 - admin:repo_hook (todo)
 
-Con ese Token vamos nos vamos a Credentials > Sytem:
+Con ese Token nos vamos a Credentials:
+
+Al pasar el ratón sobre el enlace a Jenkins en el listado, aparece un pequeño triángulo apuntando hacia abajo. Pulsando sobre él se mostrará un menú desplegable con la opción "Add domain".
+
+> **Nota:** En versiones más antiguas de Jenkins la opción "Add domain" está en Credentials > System
 
 Seleccionamos "Add domain" e introducimos `api.github.com`
 
@@ -190,11 +194,11 @@ Y en ID ponemos "GitHubToken" y en Secret Text introducimos nuestro token.
 
 > Alternativa
 
-También podemos hacerlo directamente en Jenkins a través de 
+También podemos hacerlo directamente en Jenkins a través de
 
-Administrar Jenkins > Configurar > Scroll down hasta 'GitHub Servers' > Add GitHub Server > Avanzado > 
+Administrar Jenkins > Configurar > Scroll down hasta 'GitHub Servers' > Add GitHub Server > Avanzado >
 
-Manage Additional actions > Convert login and password to token 
+Manage Additional actions > Convert login and password to token
 
 # Configure GitHub Server
 
@@ -202,7 +206,7 @@ Navegamos a Administrar Jenkins > Configurar > Scroll down hasta 'GitHub Servers
 
 Le damos a "Guardar"
 
-# Configure Global Git 
+# Configure Global Git
 
 Navegamos a Administrar Jenkins > Configurar > Scroll down hasta 'GitHub plugin' e introducimos `Global Config user.name Value` y `Global Config user.email Value`
 
