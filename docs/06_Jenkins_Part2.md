@@ -1,12 +1,12 @@
 # Jenkins (Part 2)
 
-## Docker-Hub registry
+## 1. Docker-Hub registry
 
 Antes de empezar vamos a necesitar un repo en docker-hub al que subir nuestra imágenes.
 
 Vamos a [Docker Hub](https://hub.docker.com/repository/create) y creamos un repo de nombre `geekshub-django`
 
-## Crear MultiBranch Pipeline
+## 2. Crear MultiBranch Pipeline
 
 Vamos a nuestro Jenkins (probablemente [http://localhost:8080](http://localhost:8080)) y creamos "Nueva Tarea"
 
@@ -20,6 +20,8 @@ Ahora nos vamos al repo donde tenemos nuestro backend de Django y creamos un arc
 ```
 touch Jenkinsfile
 ```
+
+> NOTA: El Jenkinsfile de los apartados 2 - 4 lo encontraréis en `pipelines/Jenkinsfile` el Jenkinsfile resultante de toda la práctica lo encontraréis en `pipelines\Jenkinsfile_v2``
 
 ```
 pipeline {
@@ -76,7 +78,7 @@ Ahora queremos que Jenkins se encarge de construir las imágenes de Docker y sub
 
 También nos gustaría que nuestro Jenkins pudiera desplegar en nuestro cluster de Kubernetes, pero aún nos queda un poco para eso primero hay que configurar...
 
-## Acceso externo al cluster
+## 3.Acceso externo al cluster
 
 Creamos una ServiceAccount con nombre `jenkins-robot` en nuestro namespace
 ```
@@ -99,11 +101,13 @@ Mostrar la dirección de nuestro API server de minikube
 APISERVER=$(kubectl config view --minify | grep server | cut -f 2- -d ":" | tr -d " ")
 ```
 
-### Crear los credenciales del token en Jenkins
+### 3.1 Crear los credenciales del token en Jenkins
 
 Vamos a Jenkins > Credentials > System > Global credentials (unrestricted) y creamos un credencial de tipo "Secret Text" con ID `minikube-auth-token` y pegamos el resultado de `echo $TOKEN`.
 
-## Instalar kubectl en el contenedor de Jenkins
+## 4. Instalar kubectl en el contenedor de Jenkins
+
+> NOTA: Este paso nos lo podemos ahorrar si hemos lanzado jenkins con este comando `docker-compose -f jenkins_build.yml up -d`
 
 entrar al contenedor en modo root
 ```
@@ -124,7 +128,8 @@ kubectl version
 
 > BONUS -> Hacer esto mismo modificando el docker compose de jenkins para que se instale automáticamente kubectl. Solucíon [aquí](99_Solutions.md).
 
-## Añadir despliegue en K8s
+
+## 5. Añadir despliegue en K8s
 
 Para despleguar haremos uso del plugin de Kubernetes que hemos instalado y añadimos esto a nuestro Jenkinsfile.
 
@@ -162,6 +167,8 @@ El problema es que esto nos hará un deploy en el cluster independientemente de 
                 expression { env.GIT_BRANCH == 'develop' }
             }
 ```
+
+> NOTA: aquí hacemos un when == 'develop' para que se ejecute este paso en la práctica. En entornos de producción usaríamos when == 'master' para que sólo en esa rama se haga el despliegue.
 
 El archivo final debería quedar así:
 ```
@@ -217,7 +224,7 @@ pipeline {
 }
 ```
 
-## Lanzamiento automático de los trabajos
+## 6. Lanzamiento automático de los trabajos
 
 En una situación normal, el plugin de Git que hemos instalado se encarga de configurar los webhooks necesarios para que se lancen los trabajos, sin embargo en nuestro caso la instalación es local y tenemos que hacer un pequeño "hack"
 
@@ -232,13 +239,13 @@ Esto preguntará al repo cada minuto si hay cambios y lanzará el trabajo en cas
 
 > NO HACER ESTO EN CASA ;)
 
-## Funcionamiento
+## 7. Funcionamiento
 
 Ahora que ya está todo configurado podemos modificar el valor de la versión en nuestro archivo de settings y ver cómo se lanza.
 
 En el repo del backend > ir a geekshub/settings.py y cambiar la variable "VERSION" por el número que queramos.
 
-## Deployment patch
+## 8. Deployment patch
 
 Ahora vemos que podemos cambiar las versiones de nuestro contenedor en el pod del deployment pero no es muy elegante:
 
@@ -248,7 +255,7 @@ Ahora vemos que podemos cambiar las versiones de nuestro contenedor en el pod de
 
 Para resolver todos estos problemas usaremos un deployement patch.
 
-### Repositorio
+### 8.1 Repositorio
 
 Creamos un repositorio para guardar nuestro archivo de deployment de develop en git y le ponemos un nombre parecido a geekshub-django-deployment.
 
