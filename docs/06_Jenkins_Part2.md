@@ -12,7 +12,7 @@ Vamos a nuestro Jenkins (probablemente [http://localhost:8080](http://localhost:
 
 Ponemos un nombre (p.ej. "Geekshubs Django") y seleccionamos una "MultiBranch Pipeline"
 
-1. En Branch sources seleccionamos GitHub y añadimos nuestra URL y nuestros credenciales
+1. En Branch sources seleccionamos Git y añadimos nuestra URL y seleccionamos nuestros credenciales del dropdown
 2. En Declarative Pipeline (Docker) introducimos la dirección de docker registry `https://registry.hub.docker.com` y seleccionamos nuestros credenciales en el dropdown
 3. Guardamos y le damos a "Scan Repository Now"
 
@@ -44,17 +44,6 @@ Cargamos las variables de entorno de Docker añadiendo debajo de triggers
     }
 ```
 
-Añadimos una primera fase de tests "dummy"
-```
-        stages {
-                stage('Test') {
-                    steps {
-                        echo 'Testing..'
-                    }
-                }
-        }
-```
-
 Ahora queremos que Jenkins se encarge de construir las imágenes de Docker y subirlas a nuestro registry
 ```
         stage('Build image') {
@@ -64,7 +53,7 @@ Ahora queremos que Jenkins se encarge de construir las imágenes de Docker y sub
                 }
             }
         }
-        stage('Deploy Image') {
+        stage('Upload image to registry') {
             steps{
                 script {
                     docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
@@ -76,9 +65,54 @@ Ahora queremos que Jenkins se encarge de construir las imágenes de Docker y sub
         }
 ```
 
+Podéis comparar el archivo final con el que se encuentra en `/pipelines/06_Jenkinsfile_part2`
+
 También nos gustaría que nuestro Jenkins pudiera desplegar en nuestro cluster de Kubernetes, pero aún nos queda un poco para eso primero hay que configurar...
 
-## 3.Acceso externo al cluster
+## 3.Fase de testeo
+
+En realidad no queremos subir siempre nuestra imágen. Tan solo cuando sepamos que nuestros test han tenido éxito.
+
+Si vemos los tests dentro de polls/test:
+
+```
+from django.test import TestCase
+from .models import Question, ChoiceNumber
+
+class ChoiceTestCase(TestCase):
+    def setUp(self):
+        question = Question.objects.create(question_text="How much is 1+1?")
+        ChoiceNumber.objects.create(question=question,choice_number=1)
+        ChoiceNumber.objects.create(question=question,choice_number=2)
+        ChoiceNumber.objects.create(question=question,choice_number=3)
+    
+    def test_questions_max_choice(self):
+        questions_query = Question.objects.all()
+
+        for question in questions_query.iterator():
+            num_choices = len(ChoiceNumber.objects.all())
+            self.assertLess(num_choices,4)
+```
+
+Vemos que hay un hipotético caso de uso que limita el número de "choices" a 4
+
+Para lanzar los tests hemos de crear un docker-compose que nos puentee el entrypoint y corra los unit-test. Esto ya lo vimos en la práctica anterior.
+
+Añadimos esta línea después de nuestro "build" y haces un commit para ver si pasan nuestros tests.
+
+```
+        stage('Test') {
+            steps {
+                sh "IMAGE=$registry TAG=$imageTag docker-compose -f docker-compose_test.yaml up --abort-on-container-exit --exit-code-from webapp"
+            }
+        }     
+```
+
+El archivo Jenkins se quedaría como en `/pipelines/06_Jenkinsfile_part3`
+
+> EJERCICIO: Cambiad la condición de test a 2 "choices" y observad como falla la pipeline
+
+## 4.Acceso externo al cluster
 
 Creamos una ServiceAccount con nombre `jenkins-robot` en nuestro namespace
 ```
@@ -138,10 +172,10 @@ Primero introduciremos las variables en la sección correspondiente:
     environment {
         registry = "escarti/geekshub-django"
         registryCredential = 'docker-registry'
+        imageTag = "${env.GIT_BRANCH + '_' + env.BUILD_NUMBER}"
         apiServer = "https://192.168.99.101:8443"
         devNamespace = "default"
         minikubeCredential = 'minikube-auth-token'
-        imageTag = "${env.GIT_BRANCH + '_' + env.BUILD_NUMBER}"
     }
 ```
 
@@ -175,22 +209,20 @@ El archivo final debería quedar así:
 pipeline {
     agent any
     triggers {
-        pollSCM('')
+        /* Vamos a pullear el repo activamente porque en nuestra instalación local sería complicado usar Webhooks */
+        pollSCM('* * * * */1')
+    }
+
+    options {
+        disableConcurrentBuilds()
     }
     environment {
-        registry = "escarti/geekshub-django"
-        registryCredential = 'docker-registry'
-        apiServer = "https://192.168.99.101:8443"
-        devNamespace = "default"
-        minikubeCredential = 'minikube-auth-token'
+        registry = "escarti/geekshub-django" /* Usad vuestro docker-hub registry */
+        registryCredential = 'Docker'
         imageTag = "${env.GIT_BRANCH + '_' + env.BUILD_NUMBER}"
+
     }
-    stages {
-        stage('Test') {
-            steps {
-                echo 'Testing..'
-            }
-        }
+    stages {   
         stage('Build image') {
             steps {
                 script {
@@ -198,11 +230,17 @@ pipeline {
                 }
             }
         }
-        stage('Upload to registry') {
+        stage('Test') {
+            steps {
+                sh "IMAGE=$registry TAG=$imageTag docker-compose -f docker-compose_test.yaml up --abort-on-container-exit --exit-code-from webapp"
+            }
+        }     
+        stage('Upload image to registry') {
             steps{
                 script {
-                    docker.withRegistry( '', registryCredential ) {
-                        dockerImage.push()                                                dockerImage.push('latest')
+                    docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
+                        dockerImage.push()
+                        dockerImage.push('latest')
                     }
                 }
             }
