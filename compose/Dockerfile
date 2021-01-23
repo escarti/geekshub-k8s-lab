@@ -4,7 +4,7 @@ FROM jenkins/jenkins:lts-alpine
 
 USER root
 
-RUN apk add --no-cache docker~=18.09 openrc~=0.39
+RUN apk add --no-cache docker~=19 openrc~=0.42
 RUN rc-update add docker boot
 
 USER jenkins

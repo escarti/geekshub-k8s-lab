@@ -15,7 +15,7 @@ docker volume create jenkins-docker-certs
 docker volume create jenkins-data
 ```
 
-Para poder ejecutar comandos dentro de Jenkins instalamos docker:dind
+Para poder ejecutar docker dentro de Jenkins (dockerizado) instalamos docker:dind (Docker in Docker)
 ```
 docker container run \
   --name jenkins-docker \
@@ -38,7 +38,7 @@ docker container run \
   --rm \
   --detach \
   --network jenkins \
-  --dns 8.8.8.8
+  --dns 8.8.8.8 \
   --env DOCKER_HOST=tcp://docker:2376 \
   --env DOCKER_CERT_PATH=/certs/client \
   --env DOCKER_TLS_VERIFY=1 \
@@ -74,7 +74,7 @@ ERROR: for compose_jenkins_1  Cannot start service jenkins: driver failed progra
 Deberemos parar los contenedores existente volver a ejecutar
 ```
 docker kill CONTAINER-ID
-docker-compose -f compose/jenkins.yml up -d
+docker-compose -f compose/jenkins_build.yml up -d
 ```
 
 Podremos ver los volúmenes creados usando
@@ -83,6 +83,13 @@ docker volume ls
 ```
 
 Veremos que tenemos dos versiones de los volúmenes.
+```
+local     compose_jenkins-data
+local     compose_jenkins-docker-certs
+local     jenkins-data
+local     jenkins-docker-certs
+```
+
 Ahora borraremos las que no vayamos a usar con el comando
 ```
 docker volume rm jenkins-data
@@ -164,12 +171,12 @@ CONTAINER ID        IMAGE               COMMAND             CREATED             
 
 Nos vamos a Jenkins > Administrar jenkins e instalamos los plugins de
 
-1. GitHub Integration Plugin
-2. GitHub plugin
+1. GitHub Integration
+2. GitHub
 3. Kubernetes
-4. Docker plugin
+4. Docker
 5. Docker Pipeline
-4. Kubernetes CLI plugin
+4. Kubernetes CLI
 
 y reiniciamos el servidor
 
@@ -202,7 +209,7 @@ Manage Additional actions > Convert login and password to token
 
 # Configure GitHub Server
 
-Navegamos a Administrar Jenkins > Configurar > Scroll down hasta 'GitHub Servers' > Add GitHub Server > Seleccionamos nuestras credenciales de Token y le damos a "Test connection"
+Navegamos a Administrar Jenkins > Configurar > Scroll down hasta 'GiHub' -> 'GitHub Servers' > Add GitHub Server > Seleccionamos nuestras credenciales de Token y le damos a "Test connection"
 
 Le damos a "Guardar"
 

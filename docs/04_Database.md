@@ -30,10 +30,12 @@ EOF
 Deplegamos los secrets en el cluster
 
 ```
-kubectl apply -f secrets.yml
+kubectl apply -f secrets.yaml
 ```
 
 > IMPORTANTE: Estos credenciales no están encriptados y no deberían subirse a un repositorio sin encriptar previamente. Se puede usar un gestor de secretos como Vault o git-crypt.
+
+Crearemos un archivo `postgres-deployment.yaml` y compiaremos
 
 Primero creamos el servicio para exponer postgresql-service en nuestro cluster
 
@@ -53,8 +55,8 @@ spec:
 
 Ahora necesitamos reservar el espacio y reclamarlo para nuestro despliegue.
 
-Crearemos un archivo 'postgres-deployment.yaml' y compiaremos
 ```
+---
 kind: PersistentVolume
 apiVersion: v1
 metadata:
@@ -137,6 +139,7 @@ minikube ssh
 
 Y una vez dentro
 ```
+sudo su
 cd /data/postgres-pv/
 ```
 
