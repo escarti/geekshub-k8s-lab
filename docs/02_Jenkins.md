@@ -145,7 +145,7 @@ Deberíamos poder hacer login con admin:admin123
 
 > ¡ENHORABUENA! Hemos instalado Jenkins con éxito.
 
-## Instalar docker en Jenkins Alpine
+## Instalar Docker y docker-compose en Jenkins Alpine
 
 Ahora debemos instalar docker dentro del contenedor de docker-alpine de Jenkins.
 
@@ -166,6 +166,21 @@ Hecho esto el comando `docker ps` dentro del contenedor debería devolver:
 ```
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
 ```
+
+Ahora instalamos docker-compose usando:
+```
+curl -L "https://github.com/docker/compose/releases/download/1.28.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+```
+
+Esto está automatizado usando:
+```
+```
+docker-compose -f compose/jenkins_build.yml up -d
+```
+
+Esto docker compose se encarga de construir la imagen e instalar docker y docker-compose
 
 ## Plugins
 
