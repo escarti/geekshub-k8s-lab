@@ -295,38 +295,47 @@ Para resolver todos estos problemas usaremos un deployement patch.
 
 ### 8.1 Repositorio
 
-Creamos un repositorio para guardar nuestro archivo de deployment de develop en git y le ponemos un nombre parecido a geekshub-django-deployment.
+1. Creamos un repositorio para guardar nuestro archivo de deployment de develop en git y le ponemos un nombre parecido a geekshub-django-deployment.
 
-Ahora en Jenkins descargaremos el archivo de deployment.
+2. Ahora en Jenkins descargaremos el archivo de deployment.
 
 > IMPORTANTE: Añadir nombre e email para GIT en Jenkins. Para ello navegamos a Administrar Jenkins > Configurar > Scroll down hasta 'Git plugin' e introducimos `Global Config user.name Value` y `Global Config user.email Value`
 > Si vuestra contraseña contiene carácteres especiales deberéis crear un credencial nuevo con vuestra contraseña en URLENCODED. En mi caso la he llamado `Git-Encoded`. La docu la dejo con el ID `GitHub`original
 
-Añadimos esta fase:
+3. Añadimos el nombre de nuestro repo (sin .git y sin el username) en las variables de entorno:
 
 ```
-stage('Update deployment file') {
+    environment {
+        .....
+        deploymentRepo = "geekshub-django-deployment"
+    }
+```
+
+4. Añadimos esta fase previo al despliegue:
+
+```
+        stage('Update deployment file') {
             when {
                 expression { env.GIT_BRANCH == 'develop' }
             }
             steps{
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'GitHub', usernameVariable: 'username', passwordVariable: 'password')]){
-                        sh "rm -rf geekshub-django-deployment"
-                        sh "git clone https://$username:$password@github.com/escarti/geekshub-django-deployment.git"
-                        dir("geekshub-django-deployment") {
+                    withCredentials([usernamePassword(credentialsId: 'GitHub-encoded', usernameVariable: 'username', passwordVariable: 'password')]){
+                        sh "rm -rf $deploymentRepo"
+                        sh "git clone https://$username:$password@github.com/$username/${deploymentRepo}.git"
+                        dir("$deploymentRepo") {
                             sh "echo \"spec:\n  template:\n    spec:\n      containers:\n        - name: django\n          image: ${registry}:$imageTag\" > patch.yaml"
                             sh "kubectl patch --local -o yaml -f django-deployment.yaml -p \"\$(cat patch.yaml)\" > new-deploy.yaml"
                             sh "mv new-deploy.yaml django-deployment.yaml"
                             sh "rm patch.yaml"
                             sh "git add ."
                             sh "git commit -m\"Patched deployment for $imageTag\""
-                            sh "git push https://$username:$password@github.com/escarti/geekshub-django-deployment.git"
+                            sh "git push https://$username:$password@github.com/$username/${deploymentRepo}.git"
                         }
                     }
                 }
             }
-        }
+        } 
 ```
 
 > MUCHO OJO con usar el plugin de "git" con varios repos dentro de una misma PIPELINE, Jenkins escaneará todos los repos que encuentre
@@ -343,7 +352,7 @@ Y modificamos la fase de despliegue:
                                 serverUrl: apiServer,
                                 namespace: devNamespace
                                ]) {
-                    sh 'kubectl apply -f geekshub-django-deployment/django-deployment.yaml'
+                    sh "kubectl apply -f ${deploymentRepo}/django-deployment.yaml"
                 }
             }
         }

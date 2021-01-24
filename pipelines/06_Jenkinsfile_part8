@@ -1,27 +1,23 @@
 pipeline {
-    /*
-    *  agent {
-    *    node {
-    *      label 'DEBIAN8'
-    *    }
-    *  }
-    */
     agent any
     triggers {
+        /* Vamos a pullear el repo activamente porque en nuestra instalación local sería complicado usar Webhooks */
         pollSCM('* * * * */1')
     }
+
     options {
         disableConcurrentBuilds()
     }
     environment {
-        registry = "escarti/geekshub-django"
+        registry = "escarti/geekshub-django" /* Usad vuestro docker-hub registry */
         registryCredential = 'Docker'
+        imageTag = "${env.GIT_BRANCH + '_' + env.BUILD_NUMBER}"
         apiServer = "https://192.168.99.101:8443"
         devNamespace = "default"
         minikubeCredential = 'minikube-auth-token'
-        imageTag = "${env.GIT_BRANCH + '_' + env.BUILD_NUMBER}"
+        deploymentRepo = "geekshub-django-deployment"
     }
-    stages {
+    stages { 
         stage('Build image') {
             steps {
                 script {
@@ -31,13 +27,13 @@ pipeline {
         }
         stage('Test') {
             steps {
-                echo 'Testing..'
+                sh "IMAGE=$registry TAG=$imageTag docker-compose -f docker-compose_test.yaml up --abort-on-container-exit --exit-code-from webapp"
             }
-        }
-        stage('Upload to registry') {
+        }     
+        stage('Upload image to registry') {
             steps{
                 script {
-                    docker.withRegistry( '', registryCredential ) {
+                    docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
                         dockerImage.push()
                         dockerImage.push('latest')
                     }
@@ -50,22 +46,22 @@ pipeline {
             }
             steps{
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'GitHub', usernameVariable: 'username', passwordVariable: 'password')]){
-                        sh "rm -rf geekshub-django-deployment"
-                        sh "git clone https://$username:$password@github.com/escarti/geekshub-django-deployment.git"
-                        dir("geekshub-django-deployment") {
+                    withCredentials([usernamePassword(credentialsId: 'GitHub-encoded', usernameVariable: 'username', passwordVariable: 'password')]){
+                        sh "rm -rf $deploymentRepo"
+                        sh "git clone https://$username:$password@github.com/$username/${deploymentRepo}.git"
+                        dir("$deploymentRepo") {
                             sh "echo \"spec:\n  template:\n    spec:\n      containers:\n        - name: django\n          image: ${registry}:$imageTag\" > patch.yaml"
                             sh "kubectl patch --local -o yaml -f django-deployment.yaml -p \"\$(cat patch.yaml)\" > new-deploy.yaml"
                             sh "mv new-deploy.yaml django-deployment.yaml"
                             sh "rm patch.yaml"
                             sh "git add ."
                             sh "git commit -m\"Patched deployment for $imageTag\""
-                            sh "git push https://$username:$password@github.com/escarti/geekshub-django-deployment.git"
+                            sh "git push https://$username:$password@github.com/$username/${deploymentRepo}.git"
                         }
                     }
                 }
             }
-        }
+        } 
         stage('Deploy to K8s') {
             when {
                 expression { env.GIT_BRANCH == 'develop' }
@@ -75,33 +71,9 @@ pipeline {
                                 serverUrl: apiServer,
                                 namespace: devNamespace
                                ]) {
-                    sh 'kubectl apply -f geekshub-django-deployment/django-deployment.yaml'
+                    sh "kubectl apply -f ${deploymentRepo}/django-deployment.yaml"
                 }
             }
         }
     }
-    /* post {
-    *    success {
-    *        script {
-    *            showtime.completeDeployment(this)
-    *        }
-    *    }
-    *    failure {
-    *        script {
-    *            if(env.GIT_BRANCH == productionBranch) {
-    *                def String slackChannel = "#hf-platform-alerts"
-    *
-    *                slackSend baseUrl: slackUrl, 
-    *                channel: slackChannel, 
-    *                color: '#951D13', 
-    *                message: "$env.GIT_URL: Error deploying branch $env.GIT_BRANCH", 
-    *                teamDomain: 'nw-hf', 
-    *                tokenCredentialId: slackTokenId
-    *
-    *                showtime.abortDeployment(this)
-    *            }
-    *        }
-    *    }
-    *}
-    */
 }
