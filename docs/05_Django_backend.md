@@ -114,6 +114,8 @@ django-6ccb67cbb9-f87tv                  1/1     Running   0          24s
 postgresql-deployment-59df5657fb-qlpfk   1/1     Running   2          22h
 ```
 
+### Minikube 
+
 Ahora obtendremos la url con 
 ```
 minikube service django-service --url
@@ -126,6 +128,19 @@ You are currently seeing:
 version 1
 Enjoy!
 ```
+
+### EKS
+
+Ejecutamos:
+```
+kubectl expose deployment django --type=LoadBalancer --name=django-service-alb
+```
+
+Para la URL pública vamos a la dashboard vamos a:
+```
+http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+```
+Y de ahí obtendremos la URL para nuestro servicio externo
 
 ## Realizar un update
 
