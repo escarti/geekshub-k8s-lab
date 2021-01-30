@@ -246,4 +246,5 @@ Nos vamos a Credentials > Sytem > Global credentials > Add credentials
 
 1. Seleccionamos username with password
 2. Introducimos datos y como ID usamos Docker
-3. Damos a Ok
+3. Para facilitar encontrar el credencial añadimos "DESCRIPTION" DOCKER
+4. Damos a Ok

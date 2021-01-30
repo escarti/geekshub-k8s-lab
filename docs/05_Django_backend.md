@@ -2,33 +2,8 @@
 
 ## Repo
 
-En primer lugar bajamos un nivel el directorio y clonamos el repo de django en su versión v1 para poder trabajar
+En primer lugar bajamos un nivel el directorio y hacemos un fork de [este repo](https://github.com/escarti/geekshub-django/fork)
 
-```
-{
-DIR=$PWD
-cd .. 
-git clone https://github.com/escarti/geekshub-django.git 
-cd geekshub-django 
-git checkout v1
-cd $DIR 
-}
-```
-### Crear repo nuevo
-
-Vamos a nuestro GitHub y creamos nuevo repo fresco.
-
-Borramos la carpeta .git del repo actual
-```
-rm -rf .git
-```
-
-Y subimos los archivos a nuestro nuevo repo.
-
-Creamos la rama "develop"
-```
-git checkout -b develop
-```
 
 ## Despliegue en K8s
 
