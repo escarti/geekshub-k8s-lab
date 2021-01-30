@@ -6,9 +6,9 @@
 
 - [Prerequisitos](docs/01_Prerequisites.md)
 - [Jenkins](docs/02_Jenkins.md)
-- [Minikube](docs/03_Minikube.md)
+- [Kubernetes](docs/03_Kubernetes.md)
 - [Database](docs/04_Database.md)
 - [Django backend](docs/05_Django_backend.md)
 - [Jenkins Part 2](docs/06_Jenkins_Part2.md)
-- [Jenkins Part 3](docs/07_Jenkins_Part3.md)
-- [Helm](docs/08_Helm.md)
+- [Production Namespace](docs/07_Production_Namespace.md)
+- [Solutions](docs/99_Solutions.md)

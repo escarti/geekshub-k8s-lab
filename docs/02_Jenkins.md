@@ -175,7 +175,7 @@ docker-compose --version
 ```
 
 Esto está automatizado usando:
-```
+
 ```
 docker-compose -f compose/jenkins_build.yml up -d
 ```
